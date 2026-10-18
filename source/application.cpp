@@ -14,7 +14,6 @@
 #include "math3d.hpp"
 #include "octahedron.hpp"
 
-// Путь к каталогу со скомпилированными шейдерами (*.spv) задаётся в CMakeLists.txt.
 #ifndef SHADER_DIR
 #define SHADER_DIR "shaders/"
 #endif
@@ -26,14 +25,11 @@ namespace {
 using math::Mat4;
 using math::Vec3;
 
-// ------------------------------------------------------------------ данные GPU
-
 struct Buffer {
 	VkBuffer buffer = VK_NULL_HANDLE;
 	VmaAllocation allocation = VK_NULL_HANDLE;
 };
 
-// Push constants: 64 байта (mat4) + 16 байт (vec4) = 80 байт (минимум по стандарту — 128).
 struct PushConstants {
 	float mvp[16];
 	float tint[4];
@@ -49,27 +45,23 @@ VkShaderModule shader_frag = VK_NULL_HANDLE;
 VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
 VkPipeline pipeline = VK_NULL_HANDLE;
 
-// -------------------------------------------------------- состояние интерфейса
 
 enum Projection : int { Perspective = 0, Orthographic = 1 };
 enum Trajectory : int { Lissajous = 0, Trefoil = 1, Spiral = 2 };
 
 struct State {
-	// Проекция и камера
 	int projection = Perspective;
 	float fov_deg = 60.0f;
-	float ortho_size = 6.0f; // половина высоты видимой области
+	float ortho_size = 6.0f; 
 	float near_plane = 0.1f;
 	float far_plane = 100.0f;
 	float camera_distance = 12.0f;
 
-	// Ручные трансформации
 	float position[3] = { 0.0f, 0.0f, 0.0f };
 	float rotation_deg[3] = { 20.0f, 30.0f, 0.0f };
 	float scale[3] = { 1.5f, 1.5f, 1.5f };
 	bool uniform_scale = true;
 
-	// Анимация
 	bool playing = true;
 	float speed = 1.0f;
 	int trajectory = Lissajous;
@@ -82,28 +74,23 @@ struct State {
 
 	double last_time = -1.0;
 	float anim_clock = 0.0f;
-	float spin_angle = 0.0f; // радианы
+	float spin_angle = 0.0f;
 
-	// Цвет фигуры (умножается на цвета вершин)
 	float color[3] = { 1.0f, 1.0f, 1.0f };
 
-	// Результат update(), используется в render()
 	Mat4 model = math::identity();
 };
 
 State state;
 
-// ------------------------------------------------------------ вспомогательное
 
 Vec3 toVec3(const float v[3]) {
 	return { v[0], v[1], v[2] };
 }
 
-// Смещение фигуры по траектории в момент параметра t.
 Vec3 trajectoryOffset(const State& s, float t) {
 	switch (s.trajectory) {
 	case Lissajous: {
-		// Фигура Лиссажу в 3D: независимые частоты по каждой оси.
 		const float phase = math::radians(s.phase_deg);
 		return {
 			s.radius * std::sin(float(s.freq[0]) * t + phase),
@@ -112,7 +99,6 @@ Vec3 trajectoryOffset(const State& s, float t) {
 		};
 	}
 	case Trefoil: {
-		// Узел-трилистник (trefoil knot).
 		const float k = s.radius / 3.0f;
 		return {
 			k * (std::sin(t) + 2.0f * std::sin(2.0f * t)),
@@ -122,7 +108,6 @@ Vec3 trajectoryOffset(const State& s, float t) {
 	}
 	case Spiral:
 	default: {
-		// Спираль с «дышащим» радиусом и колебаниями по высоте.
 		const float r = s.radius * (0.65f + 0.35f * std::sin(0.3f * t));
 		return {
 			r * std::cos(t),
@@ -133,8 +118,7 @@ Vec3 trajectoryOffset(const State& s, float t) {
 	}
 }
 
-// Модельная матрица: M = T * Rz * Ry * Rx * Rspin * S
-// (к вершине сначала применяется масштаб, затем повороты, затем перенос).
+
 Mat4 buildModel(const State& s, Vec3 trajectory_offset) {
 	const Mat4 T = math::translate(toVec3(s.position) + trajectory_offset);
 	const Mat4 R = math::rotateZ(math::radians(s.rotation_deg[2])) *
@@ -146,7 +130,6 @@ Mat4 buildModel(const State& s, Vec3 trajectory_offset) {
 }
 
 Mat4 buildView(const State& s) {
-	// Камера стоит в точке (0, 0, distance) и смотрит в начало координат.
 	return math::translate({ 0.0f, 0.0f, -s.camera_distance });
 }
 
@@ -164,7 +147,6 @@ void showMatrix(const char* label, const Mat4& m) {
 	}
 }
 
-// ---------------------------------------------------------------- Vulkan-часть
 
 bool createShaderModule(const std::string& path, VkShaderModule& module) {
 	std::ifstream file(path, std::ios::binary | std::ios::ate);
@@ -198,8 +180,6 @@ bool createShaderModule(const std::string& path, VkShaderModule& module) {
 	return true;
 }
 
-// Буфер в памяти, видимой CPU: для крошечной статической геометрии этого достаточно
-// (для больших моделей данные копируют через staging-буфер в device-local память).
 bool createBuffer(const void* data, VkDeviceSize size, VkBufferUsageFlags usage, Buffer& out) {
 	const VkBufferCreateInfo buffer_info = {
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -295,8 +275,6 @@ bool createPipeline() {
 		.primitiveRestartEnable = VK_FALSE,
 	};
 
-	// Viewport и scissor задаются динамически (при изменении размера окна
-	// не нужно пересоздавать pipeline).
 	const VkPipelineViewportStateCreateInfo viewport_state = {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
 		.viewportCount = 1,
@@ -388,9 +366,7 @@ void destroyResources() {
 	index_buffer = {};
 }
 
-} // namespace
-
-// ------------------------------------------------------------ публичный интерфейс
+} 
 
 bool initialize() {
 	std::vector<Vertex> vertices;
@@ -419,11 +395,9 @@ void shutdown() {
 void update(double time) {
 	State& s = state;
 
-	// --- время анимации (накапливаем dt, поэтому пауза и смена скорости не дают скачков)
 	const float dt = s.last_time < 0.0 ? 0.0f : float(std::fmin(time - s.last_time, 0.1));
 	s.last_time = time;
 
-	// --- интерфейс
 	ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ImVec2(400.0f, 640.0f), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Octahedron - Lab 1");
@@ -497,13 +471,11 @@ void update(double time) {
 		ImGui::ColorEdit3("Tint (x vertex color)", s.color);
 	}
 
-	// --- продвижение анимации
 	if (s.playing) {
 		s.anim_clock += dt * s.speed;
 		s.spin_angle += math::radians(s.spin_speed_deg) * dt * s.speed;
 	}
 
-	// --- итоговая модельная матрица
 	s.model = buildModel(s, trajectoryOffset(s, s.anim_clock));
 
 	if (ImGui::CollapsingHeader("Matrices")) {
@@ -526,7 +498,6 @@ void render(const graphics::internal::FrameData& fd) {
 	const State& s = state;
 	VkCommandBuffer cb = fd.command_buffer;
 
-	// Размер swapchain мог измениться внутри prepare(), поэтому aspect считаем здесь.
 	const float width = float(context.swapchain_extent.width);
 	const float height = float(context.swapchain_extent.height);
 
@@ -580,4 +551,4 @@ void render(const graphics::internal::FrameData& fd) {
 	vkEndCommandBuffer(cb);
 }
 
-} // namespace application
+} 

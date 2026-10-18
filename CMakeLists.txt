@@ -24,8 +24,6 @@ endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD_REQUIRED TRUE CXX_STANDARD 20)
 
-# Каталог со скомпилированными шейдерами (*.spv): программа читает их отсюда,
-# поэтому она не зависит от текущего рабочего каталога при запуске.
 target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/shaders/")
 
 FetchContent_Declare(
@@ -84,7 +82,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 	${imgui_SOURCE_DIR}/imgui_demo.cpp
 )
 
-# Compile shaders
 find_program(GLSLC_FOUND glslc)
 if(GLSLC_FOUND)
 	set(_SHADER_BINARIES)
@@ -103,12 +100,6 @@ if(GLSLC_FOUND)
 
 		list(APPEND _SHADER_BINARIES ${SHADER_BINARY_PATH})
 	endmacro()
-
-	# To compile shader file, use compile_shader function with a file name
-	# of a shader inside shaders directory. See example below:
-
-	# compile_shader(example.vert)
-	# compile_shader(example.frag)
 
 	compile_shader(octahedron.vert)
 	compile_shader(octahedron.frag)

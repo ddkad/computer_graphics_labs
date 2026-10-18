@@ -1,16 +1,5 @@
 #pragma once
 
-// Минимальная математическая библиотека для лабораторной работы №1.
-//
-// Соглашения:
-//  * Mat4 хранится по СТОЛБЦАМ: m[столбец][строка]. Так же устроен mat4 в GLSL,
-//    поэтому матрицу можно копировать в push constants / uniform «как есть».
-//  * Векторы — столбцы, преобразование записывается как  v' = M * v.
-//  * Система координат правая (right-handed), камера в пространстве вида
-//    смотрит вдоль оси -Z, ось +Y направлена вверх.
-//  * Матрицы проекции рассчитаны на Vulkan: диапазон глубины NDC z ∈ [0, 1],
-//    ось Y в NDC направлена ВНИЗ (поэтому в проекции стоит знак «минус» по Y).
-
 #include <cmath>
 
 namespace math {
@@ -42,7 +31,7 @@ struct Vec4 {
 };
 
 struct Mat4 {
-	float m[4][4]; // m[столбец][строка]
+	float m[4][4]; 
 };
 
 inline Mat4 identity() {
@@ -51,7 +40,6 @@ inline Mat4 identity() {
 	return r;
 }
 
-// C = A * B  (сначала применяется B, затем A)
 inline Mat4 operator*(const Mat4& a, const Mat4& b) {
 	Mat4 r{};
 	for (int c = 0; c < 4; ++c) {
@@ -75,7 +63,6 @@ inline Vec4 operator*(const Mat4& a, Vec4 v) {
 	};
 }
 
-// ---------------------------------------------------------------- аффинные
 
 inline Mat4 translate(Vec3 t) {
 	Mat4 r = identity();
@@ -117,7 +104,6 @@ inline Mat4 rotateZ(float a) {
 	return r;
 }
 
-// Поворот на угол a вокруг произвольной оси (формула Родрига).
 inline Mat4 rotateAxis(Vec3 axis, float a) {
 	const float len = length(axis);
 	if (len < 1e-6f) {
@@ -133,32 +119,27 @@ inline Mat4 rotateAxis(Vec3 axis, float a) {
 	return r;
 }
 
-// -------------------------------------------------------------------- проекции
 
-// Перспективная проекция (RH, глубина [0,1], Y вниз).
-// fov_y — вертикальный угол обзора в радианах, aspect = ширина / высота.
 inline Mat4 perspective(float fov_y, float aspect, float near_plane, float far_plane) {
 	const float f = 1.0f / std::tan(fov_y * 0.5f);
 	Mat4 r{};
 	r.m[0][0] = f / aspect;
-	r.m[1][1] = -f;                                              // переворот Y для Vulkan
+	r.m[1][1] = -f;                                          
 	r.m[2][2] = far_plane / (near_plane - far_plane);
-	r.m[2][3] = -1.0f;                                           // w_clip = -z_view
+	r.m[2][3] = -1.0f;                                        
 	r.m[3][2] = (near_plane * far_plane) / (near_plane - far_plane);
 	return r;
 }
 
-// Ортографическая проекция (RH, глубина [0,1], Y вниз), симметричная:
-// видимая область по Y — [-half_height, +half_height], по X — с учётом aspect.
 inline Mat4 orthographic(float half_height, float aspect, float near_plane, float far_plane) {
 	const float half_width = half_height * aspect;
 	Mat4 r{};
 	r.m[0][0] = 1.0f / half_width;
-	r.m[1][1] = -1.0f / half_height;                             // переворот Y для Vulkan
+	r.m[1][1] = -1.0f / half_height;                           
 	r.m[2][2] = 1.0f / (near_plane - far_plane);
 	r.m[3][2] = near_plane / (near_plane - far_plane);
 	r.m[3][3] = 1.0f;
 	return r;
 }
 
-} // namespace math
+} 
