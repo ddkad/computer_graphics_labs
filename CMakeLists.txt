@@ -15,7 +15,7 @@ elseif(WIN32)
 		target_link_options(${PROJECT_NAME} PRIVATE /subsystem:windows /entry:mainCRTStartup)
 	else()
 		target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wno-missing-field-initializers)
-		target_link_options(${PROJECT_NAME} PRIVATE -mwindows)
+		# target_link_options(${PROJECT_NAME} PRIVATE -mwindows)
 	endif()
 	target_compile_definitions(${PROJECT_NAME} PRIVATE -D_USE_MATH_DEFINES)
 else()
@@ -23,6 +23,10 @@ else()
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD_REQUIRED TRUE CXX_STANDARD 20)
+
+# Каталог со скомпилированными шейдерами (*.spv): программа читает их отсюда,
+# поэтому она не зависит от текущего рабочего каталога при запуске.
+target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/shaders/")
 
 FetchContent_Declare(
 	glfw
@@ -105,6 +109,9 @@ if(GLSLC_FOUND)
 
 	# compile_shader(example.vert)
 	# compile_shader(example.frag)
+
+	compile_shader(octahedron.vert)
+	compile_shader(octahedron.frag)
 
 	add_custom_target(shaders DEPENDS ${_SHADER_BINARIES})
 	add_dependencies(${PROJECT_NAME} shaders)
