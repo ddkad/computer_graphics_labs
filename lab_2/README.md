@@ -1,66 +1,41 @@
-# 🌋 Vulkan Starter App
+# Лабораторная работа №2: Освещение (Blinn-Phong)
 
-## Getting started
+## Условие варианта / Задание
+Реализовать модель освещения Блинна-Фонга (Blinn-Phong) в графическом API Vulkan. В рамках работы необходимо реализовать точечные источники света (Point lights) с затуханием по закону обратных квадратов, прожекторные источники света (Spot lights) с мягким краем (интерполяция между внутренним и внешним углами конуса), направленный свет (Directional light) и фоновое освещение (Ambient). Также требуется добавить интерактивный интерфейс для добавления/удаления источников света, изменения их цвета, интенсивности и позиции, а также настройки материалов объектов (альбедо, цвет блика, коэффициент блеска).
 
-You need C++ compiler, Vulkan SDK and CMake installed before you can build this project.
+## Стек технологий
+* Язык: C++ (стандарт C++20)
+* Графическое API: Vulkan
+* Библиотеки: GLFW, VkBootstrap, VulkanMemoryAllocator (VMA), Dear ImGui.
+* Сборка: CMake
 
-This project uses C++20 standard and thus requires either of those compilers:
-- GCC 10.X
-- Clang 10
-- Microsoft Visual Studio 2019
+## Как собрать и запустить
 
-This is officially tested on *Windows* and *GNU/Linux platforms*, no *macOS* support yet.
-If you have a working macOS solution of this code, consider submitting a PR so others
-can build this example code without a hassle!
+### Требования
+1. Установленный Vulkan SDK (с добавлением пути в PATH).
+2. Компилятор C++ с поддержкой C++20.
+3. Утилита CMake (версия 3.20+).
+4. Git (для загрузки зависимостей).
 
-<ins>**1. Downloading the repository**</ins>
+### Шаги сборки (Windows / MinGW)
+1. Откройте терминал в корне папки lab_2.
+2. Сгенерируйте файлы сборки:
+   cmake -B build -DCMAKE_BUILD_TYPE=Release
+3. Соберите проект:
+   cmake --build build --config Release
+4. Компиляция шейдеров (обязательно, если не настроена автоматизация):
+   glslc shaders/octahedron.vert -o shaders/octahedron.vert.spv
+   glslc shaders/octahedron.frag -o shaders/octahedron.frag.spv
+   Здесь шейдеры используют Uniform Buffers и Storage Buffers для передачи света, а не Push Constants, как в лабораторной работе 1.
 
-Start by cloning the repository with `git clone --depth 1 https://github.com/vladeemerr/vulkan-starter-app`
+### Запуск
+Запустите приложение из папки сборки (убедитесь, что папка shaders с файлами .spv находится рядом с исполняемым файлом или в рабочей директории):
+cd build
+./vulkan-starter-app
 
-This repository does not contain any submodules, it utilizes CMake's `FetchContent` feature instead.
-
-<ins>**2. Configuring the project**</ins>
-
-Run either one of the CMake lines to download dependencies and configure the project:
-
-```bash
-cmake --preset debug       # for GNU/Linux (GCC/Clang)
-cmake --preset msvc-debug  # for Windows (Visual Studio 2019)
-cmake --preset mingw-debug # for Windows (MinGW)
-```
-
-If you wish to build in `release` mode, change `debug` to `release`.
-
-If changes are made (added/removed files), or if you want to regenerate project files, rerun the command above.
-
-<ins>**3. Building**</ins>
-
-To build the project, use the line below. You are most likely using `debug` preset, so
-the directory that will eventually contain your build files is named `build-debug`.
-
-Likewise for `release` that directory will be named `build-release`
-
-Run one those commands, depending on which preset you chose:
-
-```bash
-cmake --build build-debug --parallel # for debug
-cmake --build build-release --parallel # for release
-```
-
-### Running
-
-`build-*` directory will contain the executable in one of the subdirectories after successful build.
-
-For `msvc-{debug|release}` builds output subdirectory is set to `Debug` or `Release` respectively.
-For other configurations output subdirectory is set to `vulkan-starter-app`.
-
-**Make sure your working directory is set to the project root!**
-Project root is where this README file resides. Otherwise, the
-code responsible for loading shaders or other resources from files will fail,
-because relative paths are used.
-
-### Compiling shaders
-
-`CMakeLists.txt` has a build recipe for compiling shader files
-along with an application. Look for a comment in this file to see
-how to compile your shaders.
+## Управление
+В левой панели ImGui доступны следующие функции:
+* Camera: перемещение камеры в пространстве (ПКМ + мышь), выбор проекции.
+* Ambient & directional light: настройка фонового и направленного освещения.
+* Point lights / Spot lights: добавление и удаление источников света, настройка их цветов и интенсивности. Для прожектора можно настроить внутренний (Inner) и внешний (Outer) углы для получения мягкого края пятна.
+* Objects & materials: выбор объекта и настройка его свойств по модели Блинна-Фонга (альбедо, цвет блика, коэффициент блеска/шероховатости).
