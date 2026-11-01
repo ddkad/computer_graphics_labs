@@ -1,66 +1,38 @@
-# 🌋 Vulkan Starter App
+# Лабораторная работа №1: Октаэдр, проекции, трансформации, анимация
 
-## Getting started
+## Условие варианта / Задание
+Реализовать отрисовку трехмерной модели (октаэдра) с использованием графического API Vulkan. В рамках работы необходимо реализовать перспективную и ортогональную проекции с возможностью переключения, трансформации модели (перемещение, вращение, масштабирование), а также анимацию модели по заданной траектории (кривая Лиссажу, трилистник, спираль) с возможностью управления скоростью и паузой. Отрисовка вершинным шейдером выполняется с передачей матриц через push-константы.
 
-You need C++ compiler, Vulkan SDK and CMake installed before you can build this project.
+## Стек технологий
+* Язык: C++ (стандарт C++20)
+* Графическое API: Vulkan
+* Библиотеки: GLFW (окна), VkBootstrap (инициализация Vulkan), VulkanMemoryAllocator (управление памятью), Dear ImGui (графический интерфейс).
+* Сборка: CMake
 
-This project uses C++20 standard and thus requires either of those compilers:
-- GCC 10.X
-- Clang 10
-- Microsoft Visual Studio 2019
+## Как собрать и запустить
 
-This is officially tested on *Windows* and *GNU/Linux platforms*, no *macOS* support yet.
-If you have a working macOS solution of this code, consider submitting a PR so others
-can build this example code without a hassle!
+### Требования
+1. Установленный Vulkan SDK (обязательно должна быть установлена переменная окружения VULKAN_SDK).
+2. Компилятор C++ с поддержкой C++20 (MSVC, GCC или Clang).
+3. Утилита CMake (версия 3.20 или выше).
+4. Git (для автоматической подгрузки зависимостей через CMake FetchContent).
 
-<ins>**1. Downloading the repository**</ins>
+### Шаги сборки (Windows / MinGW)
+1. Откройте терминал в корне папки lab_1.
+2. Сгенерируйте файлы сборки (можно использовать пресеты из CMakePresets.json):
+   cmake -B build -DCMAKE_BUILD_TYPE=Release
+3. Соберите проект:
+   cmake --build build --config Release
+4. Важно: Скомпилируйте шейдеры (если CMake не сделал это автоматически). Для этого используйте glslc из Vulkan SDK:
+   glslc shaders/octahedron.vert -o shaders/octahedron.vert.spv
+   glslc shaders/octahedron.frag -o shaders/octahedron.frag.spv
 
-Start by cloning the repository with `git clone --depth 1 https://github.com/vladeemerr/vulkan-starter-app`
+### Запуск
+Перейдите в папку сборки и запустите исполняемый файл:
+cd build
+./vulkan-starter-app
+(В Windows файл будет называться vulkan-starter-app.exe).
 
-This repository does not contain any submodules, it utilizes CMake's `FetchContent` feature instead.
-
-<ins>**2. Configuring the project**</ins>
-
-Run either one of the CMake lines to download dependencies and configure the project:
-
-```bash
-cmake --preset debug       # for GNU/Linux (GCC/Clang)
-cmake --preset msvc-debug  # for Windows (Visual Studio 2019)
-cmake --preset mingw-debug # for Windows (MinGW)
-```
-
-If you wish to build in `release` mode, change `debug` to `release`.
-
-If changes are made (added/removed files), or if you want to regenerate project files, rerun the command above.
-
-<ins>**3. Building**</ins>
-
-To build the project, use the line below. You are most likely using `debug` preset, so
-the directory that will eventually contain your build files is named `build-debug`.
-
-Likewise for `release` that directory will be named `build-release`
-
-Run one those commands, depending on which preset you chose:
-
-```bash
-cmake --build build-debug --parallel # for debug
-cmake --build build-release --parallel # for release
-```
-
-### Running
-
-`build-*` directory will contain the executable in one of the subdirectories after successful build.
-
-For `msvc-{debug|release}` builds output subdirectory is set to `Debug` or `Release` respectively.
-For other configurations output subdirectory is set to `vulkan-starter-app`.
-
-**Make sure your working directory is set to the project root!**
-Project root is where this README file resides. Otherwise, the
-code responsible for loading shaders or other resources from files will fail,
-because relative paths are used.
-
-### Compiling shaders
-
-`CMakeLists.txt` has a build recipe for compiling shader files
-along with an application. Look for a comment in this file to see
-how to compile your shaders.
+## Управление
+* Интерфейс управления (ImGui) находится в левой части окна.
+* С его помощью можно менять тип проекции, FOV, параметры трансформации, настраивать скорость и тип траектории анимации.
